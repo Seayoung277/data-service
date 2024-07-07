@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DataService {
@@ -35,5 +36,17 @@ public class DataService {
                 .stream()
                 .map(document -> Record.fromBson(document, objectDefinition))
                 .toList();
+    }
+
+    public void saveRecord(String objectName, Map<String, String> record) {
+        MongoCollection<Document> collection = mongoDatabase.getCollection(objectName);
+        ObjectDefinition objectDefinition = metadataClient.getObjectDefinition(objectName);
+        Document document = new Document();
+        record.forEach((key, value) -> {
+            if (objectDefinition.getFields().stream().anyMatch(field -> field.getName().equals(key))) {
+                document.append(key, value);
+            }
+        });
+        collection.insertOne(document);
     }
 }
